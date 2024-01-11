@@ -2,18 +2,18 @@
 %define libver 1
 
 Name: dwarves
-Version: 1.24
-Release: 2%{?dist}
+Version: 1.25
+Release: 1%{?dist}
 License: GPLv2
 Summary: Debugging Information Manipulation Tools (pahole & friends)
 URL: http://acmel.wordpress.com
 Source: http://fedorapeople.org/~acme/dwarves/%{name}-%{version}.tar.xz
 Requires: %{libname}%{libver} = %{version}-%{release}
-Patch1: 0001-dwarves-Zero-initialize-struct-cu-in-cu__new-to-prev.patch
 BuildRequires: gcc
 BuildRequires: cmake >= 2.8.12
 BuildRequires: zlib-devel
 BuildRequires: elfutils-devel >= 0.130
+BuildRequires: libbpf-devel
 
 %description
 dwarves is a set of tools that use the debugging information inserted in
@@ -66,10 +66,9 @@ Debugging information processing library development files.
 
 %prep
 %setup -q
-%patch1 -p1
 
 %build
-%cmake -DCMAKE_BUILD_TYPE=Release .
+%cmake -DCMAKE_BUILD_TYPE=Release -DLIBBPF_EMBEDDED=Off .
 %cmake_build
 
 %install
@@ -81,8 +80,7 @@ rm -Rf %{buildroot}
 %files
 %doc README.ctracer
 %doc README.btf
-%doc changes-v1.23
-%doc changes-v1.24
+%doc changes-v1.25
 %doc NEWS
 %{_bindir}/btfdiff
 %{_bindir}/codiff
@@ -134,6 +132,20 @@ rm -Rf %{buildroot}
 %{_libdir}/%{libname}_reorganize.so
 
 %changelog
+* Wed Jun 14 2023 Viktor Malik <vmalik@redhat.com> - 1.25-1
+- Resolves: rhbz#2190484
+- Build with system libbpf
+- New release: v1.25
+- Support for DW_TAG_unspecified_type more generally.
+- Make sure struct member offsets are in ascending order. Rust BTF needs this.
+- Support C atomic types (DW_TAG_atomic_type).
+- Initial support for DW_TAG_LLVM_annotation, used for BTF type tags, for __rcu, __user, etc
+- Exclude functions with the same name (static functions in different CUs), inconsistent prototypes or not following calling convention.
+- Allow generation of BTF for optimized functions, those that end with a .isra*, .constprop*.
+- Support 'pahole --lang=/--lang_exclude=asm'
+- Support --compile from DWARF in addition to from BTF.
+- Exclude RUST CUs in 'btfdiff', as those are not yet being BTF encoded.
+
 * Wed Nov 16 2022 Viktor Malik <vmalik@redhat.com> - 1.24-2
 - Backport BTF fix needed for kernel kfuncs
 - Related: rhbz#2140020
