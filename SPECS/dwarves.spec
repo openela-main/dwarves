@@ -2,7 +2,7 @@
 %define libver 1
 
 Name: dwarves
-Version: 1.30
+Version: 1.31
 Release: 1%{?dist}
 License: GPLv2
 Summary: Debugging Information Manipulation Tools (pahole & friends)
@@ -80,9 +80,7 @@ rm -Rf %{buildroot}
 %files
 %doc README.ctracer
 %doc README.btf
-%doc changes-v1.28
-%doc changes-v1.29
-%doc changes-v1.30
+%doc changes-v1.31
 %doc NEWS
 %{_bindir}/btfdiff
 %{_bindir}/codiff
@@ -134,6 +132,24 @@ rm -Rf %{buildroot}
 %{_libdir}/%{libname}_reorganize.so
 
 %changelog
+* Mon Dec 1 2025 Gregory Bell <grbell@redhat.com> - 1.31-1
+- Rework the selection of functions to represent in BTF, for instance:
+- Skip functions that passes values thru the stack when those structs don't
+have expected alignment due to some attribute usage that then causes
+problems with BTF trampolines due to lack of expressiveness in BTF to
+signal such special cases.
+- Skip objects (compile units) without DWARF: don't stop a multi object
+encoding session just because one doesn't have any DWARF in it.
+- Fix BTF dedup by updating libbpf. 
+- Fix the inference of the explicit alignment attribute of zero length arrays,
+like struct skb_ext->data[] in the Linux kernel. Important as BTF has no no
+explicit alignment attribute encoding.
+- Fix the inference of alignments after bitfields, such as in struct
+nft_rule_dp->data[] after ->handle:42, also in the Linux kernel.    
+- Fix segfault with --show_reorg_steps option, e.g. pahole -R -S -C task_struct.
+- Add comparision of functions encoded in BTF between baseline 'master' branch
+and current branch, i.e. 'next'.
+
 * Fri Jun 20 2025 Gregory Bell <grbell@redhat.com> - 1.30-1
 - New release: 1.30
 - Better detection of abort during DWARF loader thread processing
